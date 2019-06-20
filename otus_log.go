@@ -45,9 +45,11 @@ func LogOtusEvent(e OtusEvent, w io.Writer) {
 		fmt.Println(err)
 	}
 }
-type my_writer struct {}
+type my_writer struct {
+	slice_of_bytes [][]byte
+}
 
-func (w my_writer) Write(b []byte) (n int, err error)  {
+func (w *my_writer) Write(b []byte) (n int, err error)  {
 	if _, err := os.Stat("logs.log"); os.IsNotExist(err) {
 		file, err := os.Create("logs.log")
 		if err != nil {
@@ -77,12 +79,14 @@ func (w my_writer) Write(b []byte) (n int, err error)  {
 		fmt.Println(err)
 	}
 
+	w.slice_of_bytes = append(w.slice_of_bytes, b)
+
 	return n, err
 }
 
 func main() {
-
-	writer := my_writer{}
+	//writer реализующий интерфейс io.Writer умеющий печатать в файл, в stdOut и в Slice
+	writer := &my_writer{slice_of_bytes:make([][]byte,0)}
 
 	LogOtusEvent(HwAccepted{Id:1,Grade:0}, writer)
 	LogOtusEvent(HwAccepted{Id:2,Grade:1}, writer)
@@ -93,5 +97,10 @@ func main() {
 	LogOtusEvent(HwSubmitted{Id:3,Code:"Code 3",Comment:"the"}, writer)
 	LogOtusEvent(HwSubmitted{Id:4,Code:"Code 4",Comment:"best"}, writer)
 	LogOtusEvent(HwSubmitted{Id:5,Code:"Code 5",Comment:"game!"}, writer)
+
+	for i,val := range writer.slice_of_bytes{
+		fmt.Printf("%v : %v",i, string(val))
+	}
+
 
 }
